@@ -4,6 +4,16 @@ on:
     branches:
       - main
     types: [closed]
+  workflow_dispatch:
+    inputs:
+      releaseTitle:
+        description: 'Release title'
+        required: true
+        type: string
+      releaseDescription:
+        description: 'Release description'
+        required: true
+        type: string
 env:
   DEVELOPER_DIR: /Applications/Xcode_26.0.1.app
   APP_VERSION: '2.8.0'
@@ -21,12 +31,27 @@ jobs:
   Deploy:
     runs-on: macos-26
     if: |
+      github.event_name == 'workflow_dispatch' || (
       github.event.pull_request.merged == true && (
       github.event.pull_request.user.login == 'aalberrty' ||
-      github.event.pull_request.user.login == 'chihchy')
+      github.event.pull_request.user.login == 'chihchy'))
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Set release context
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_DESCRIPTION: ${{ github.event.pull_request.body }}
+          DISPATCH_TITLE: ${{ inputs.releaseTitle }}
+          DISPATCH_DESCRIPTION: ${{ inputs.releaseDescription }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "RELEASE_TITLE=${DISPATCH_TITLE}" >> $GITHUB_ENV
+            printf 'RELEASE_DESCRIPTION<<__EOF__\n%s\n__EOF__\n' "${DISPATCH_DESCRIPTION}" >> $GITHUB_ENV
+          else
+            echo "RELEASE_TITLE=${PR_TITLE}" >> $GITHUB_ENV
+            printf 'RELEASE_DESCRIPTION<<__EOF__\n%s\n__EOF__\n' "${PR_DESCRIPTION}" >> $GITHUB_ENV
+          fi
       - name: Modify git config
         run: |
           git config user.name "github-actions[bot]"
@@ -77,11 +102,12 @@ jobs:
           sudo chmod 777 $FILTER_PATH
           echo "size=$(stat -f%z $IPA_OUTPUT_PATH)" >> $GITHUB_OUTPUT
           echo "version_date=$(date -u +"%Y-%m-%dT%T")" >> $GITHUB_OUTPUT
-          echo "notes=$($FILTER_PATH "${{ github.event.pull_request.body }}")" >> $GITHUB_OUTPUT
+          NOTES=$($FILTER_PATH "${RELEASE_DESCRIPTION}")
+          echo "notes=${NOTES}" >> $GITHUB_OUTPUT
       - name: Validate data
         run: |
-          [[ ! -z "${{ github.event.pull_request.body }}" ]] || exit 1
-          [[ ! -z "${{ github.event.pull_request.title }}" ]] || exit 1
+          [[ ! -z "${{ env.RELEASE_DESCRIPTION }}" ]] || exit 1
+          [[ ! -z "${{ env.RELEASE_TITLE }}" ]] || exit 1
           [[ ! -z "${{ steps.retrieve-data.outputs.size }}" ]] || exit 1
           [[ ! -z "${{ steps.retrieve-data.outputs.notes }}" ]] || exit 1
           [[ ! -z "${{ steps.bump-version.outputs.version }}" ]] || exit 1
@@ -92,8 +118,8 @@ jobs:
          fail_on_unmatched_files: true
          files: ${{ env.IPA_OUTPUT_PATH }}
          token: ${{ secrets.GITHUB_TOKEN }}
-         body: ${{ github.event.pull_request.body }}
-         name: ${{ github.event.pull_request.title }}
+         body: ${{ env.RELEASE_DESCRIPTION }}
+         name: ${{ env.RELEASE_TITLE }}
          tag_name: 'v${{ steps.bump-version.outputs.version }}'
       - name: Commit bump version
         run: |
@@ -116,7 +142,7 @@ jobs:
         run: |
          curl https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
          -d parse_mode=markdown -d chat_id=${{ secrets.TELEGRAM_CHANNEL_ID }} \
-         -d text='*v${{ steps.bump-version.outputs.version }} Release Notes:*%0A${{ github.event.pull_request.body }}'
+         -d text='*v${{ steps.bump-version.outputs.version }} Release Notes:*%0A${{ env.RELEASE_DESCRIPTION }}'
 
          curl ${{ secrets.DISCORD_WEBHOOK }} \
          -F 'payload_json={"content": "**v${{ steps.bump-version.outputs.version }} Release Notes:**\n${{ steps.retrieve-data.outputs.notes }}"}'
