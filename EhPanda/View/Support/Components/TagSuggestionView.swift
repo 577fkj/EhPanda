@@ -37,7 +37,7 @@ struct TagSuggestionView: View {
                     action: { translationHandler.autoComplete(suggestion: suggestion, keyword: &keyword) }
                 )
             }
-            .onChange(of: keyword) {
+            .onChange(of: keyword) { _ in
                 translationHandler.analyze(text: &keyword, translations: translations)
             }
         }
