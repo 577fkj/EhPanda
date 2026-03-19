@@ -44,7 +44,13 @@ struct AboutView: View {
         }
         .navigationTitle(L10n.Localizable.AboutView.Title.ehPanda)
         .toolbar {
-            ToolbarItem(placement: .largeSubtitle) {
+            ToolbarItem(placement: {
+                if #available(iOS 26, *) {
+                    return .largeSubtitle
+                } else {
+                    return .bottomBar
+                }
+            }()) {
                 VStack(alignment: .leading) {
                     Text(L10n.Constant.App.copyright)
                     Text(version)
