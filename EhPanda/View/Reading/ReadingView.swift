@@ -37,56 +37,58 @@ struct ReadingView: View {
     }
 
     var body: some View {
-        changeTriggers(content: { content })
-            .sheet(item: $store.route.sending(\.setNavigation).readingSetting) { _ in
-                NavigationView {
-                    ReadingSettingView(
-                        readingDirection: $setting.readingDirection,
-                        prefetchLimit: $setting.prefetchLimit,
-                        enablesLandscape: $setting.enablesLandscape,
-                        contentDividerHeight: $setting.contentDividerHeight,
-                        maximumScaleFactor: $setting.maximumScaleFactor,
-                        doubleTapScaleFactor: $setting.doubleTapScaleFactor
-                    )
-                    .toolbar {
-                        if !DeviceUtil.isPad && DeviceUtil.isLandscape {
-                            CustomToolbarItem(placement: .cancellationAction) {
-                                Button {
-                                    store.send(.setNavigation(nil))
-                                } label: {
-                                    Image(systemSymbol: .chevronDown)
+        WithPerceptionTracking {
+            changeTriggers(content: { content })
+                .sheet(item: $store.route.sending(\.setNavigation).readingSetting) { _ in
+                    NavigationView {
+                        ReadingSettingView(
+                            readingDirection: $setting.readingDirection,
+                            prefetchLimit: $setting.prefetchLimit,
+                            enablesLandscape: $setting.enablesLandscape,
+                            contentDividerHeight: $setting.contentDividerHeight,
+                            maximumScaleFactor: $setting.maximumScaleFactor,
+                            doubleTapScaleFactor: $setting.doubleTapScaleFactor
+                        )
+                        .toolbar {
+                            if !DeviceUtil.isPad && DeviceUtil.isLandscape {
+                                CustomToolbarItem(placement: .cancellationAction) {
+                                    Button {
+                                        store.send(.setNavigation(nil))
+                                    } label: {
+                                        Image(systemSymbol: .chevronDown)
+                                    }
                                 }
                             }
                         }
                     }
-                }
-                .accentColor(setting.accentColor)
-                .tint(setting.accentColor)
-                .autoBlur(radius: blurRadius)
-                .navigationViewStyle(.stack)
-            }
-            .sheet(item: $store.route.sending(\.setNavigation).share) { shareItemBox in
-                ActivityView(activityItems: [shareItemBox.wrappedValue.associatedValue])
                     .accentColor(setting.accentColor)
+                    .tint(setting.accentColor)
                     .autoBlur(radius: blurRadius)
-            }
-            .progressHUD(
-                config: store.hudConfig,
-                unwrapping: $store.route,
-                case: \.hud
-            )
+                    .navigationViewStyle(.stack)
+                }
+                .sheet(item: $store.route.sending(\.setNavigation).share) { shareItemBox in
+                    ActivityView(activityItems: [shareItemBox.wrappedValue.associatedValue])
+                        .accentColor(setting.accentColor)
+                        .autoBlur(radius: blurRadius)
+                }
+                .progressHUD(
+                    config: store.hudConfig,
+                    unwrapping: $store.route,
+                    case: \.hud
+                )
 
-            .animation(.linear(duration: 0.1), value: gestureHandler.offset)
-            .animation(.default, value: liveTextHandler.enablesLiveText)
-            .animation(.default, value: liveTextHandler.liveTextGroups)
-            .animation(.default, value: gestureHandler.scale)
-            .animation(.default, value: store.showsPanel)
-            .statusBar(hidden: !store.showsPanel)
-            .onDisappear {
-                liveTextHandler.cancelRequests()
-                setAutoPlayPolocy(.off)
-            }
-            .onAppear { store.send(.onAppear(gid, setting.enablesLandscape)) }
+                .animation(.linear(duration: 0.1), value: gestureHandler.offset)
+                .animation(.default, value: liveTextHandler.enablesLiveText)
+                .animation(.default, value: liveTextHandler.liveTextGroups)
+                .animation(.default, value: gestureHandler.scale)
+                .animation(.default, value: store.showsPanel)
+                .statusBar(hidden: !store.showsPanel)
+                .onDisappear {
+                    liveTextHandler.cancelRequests()
+                    setAutoPlayPolocy(.off)
+                }
+                .onAppear { store.send(.onAppear(gid, setting.enablesLandscape)) }
+        }
     }
 
     var content: some View {

@@ -50,142 +50,144 @@ struct GeneralSettingView: View {
     }
 
     var body: some View {
-        Form {
-            Section {
-                HStack {
-                    Text(L10n.Localizable.GeneralSettingView.Title.language)
-                    Spacer()
-                    Button(language) {
-                        store.send(.navigateToSystemSetting)
+        WithPerceptionTracking {
+            Form {
+                Section {
+                    HStack {
+                        Text(L10n.Localizable.GeneralSettingView.Title.language)
+                        Spacer()
+                        Button(language) {
+                            store.send(.navigateToSystemSetting)
+                        }
+                        .foregroundStyle(.tint)
                     }
-                    .foregroundStyle(.tint)
+                    Button(L10n.Localizable.GeneralSettingView.Button.logs) {
+                        store.send(.setNavigation(.logs))
+                    }
+                    .foregroundColor(.primary).withArrow()
                 }
-                Button(L10n.Localizable.GeneralSettingView.Button.logs) {
-                    store.send(.setNavigation(.logs))
-                }
-                .foregroundColor(.primary).withArrow()
-            }
-            Section(L10n.Localizable.GeneralSettingView.Section.Title.tags) {
-                HStack {
-                    Text(L10n.Localizable.GeneralSettingView.Title.enablesTagsExtension)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                Section(L10n.Localizable.GeneralSettingView.Section.Title.tags) {
+                    HStack {
+                        Text(L10n.Localizable.GeneralSettingView.Title.enablesTagsExtension)
+                            .frame(maxWidth: .infinity, alignment: .leading)
 
-                    ZStack {
-                        Image(systemSymbol: .exclamationmarkTriangleFill)
-                            .foregroundStyle(.yellow)
-                            .opacity(
-                                translatesTags && tagTranslatorEmpty
-                                && tagTranslatorLoadingState != .loading ? 1 : 0
-                            )
-                        ProgressView()
-                            .tint(nil)
-                            .opacity(tagTranslatorLoadingState == .loading ? 1 : 0)
-                    }
+                        ZStack {
+                            Image(systemSymbol: .exclamationmarkTriangleFill)
+                                .foregroundStyle(.yellow)
+                                .opacity(
+                                    translatesTags && tagTranslatorEmpty
+                                    && tagTranslatorLoadingState != .loading ? 1 : 0
+                                )
+                            ProgressView()
+                                .tint(nil)
+                                .opacity(tagTranslatorLoadingState == .loading ? 1 : 0)
+                        }
 
-                    Toggle("", isOn: $enablesTagsExtension)
-                        .frame(width: 50)
-                        .padding(.leading, 20)
-                }
-                if enablesTagsExtension && !tagTranslatorEmpty {
-                    Toggle(L10n.Localizable.GeneralSettingView.Title.translatesTags, isOn: $translatesTags)
-                    Toggle(
-                        L10n.Localizable.GeneralSettingView.Title.showsTagsSearchSuggestion,
-                        isOn: $showsTagsSearchSuggestion
-                    )
-                    Toggle(L10n.Localizable.GeneralSettingView.Title.showsImagesInTags, isOn: $showsImagesInTags)
-                }
-                FilePicker(
-                    types: [.json], allowMultiple: false,
-                    title: L10n.Localizable.GeneralSettingView.Button.importCustomTranslations
-                ) { urls in
-                    if let url = urls.first {
-                        store.send(.onTranslationsFilePicked(url))
+                        Toggle("", isOn: $enablesTagsExtension)
+                            .frame(width: 50)
+                            .padding(.leading, 20)
                     }
-                }
-                if tagTranslatorHasCustomTranslations {
-                    Button(
-                        L10n.Localizable.GeneralSettingView.Button.removeCustomTranslations,
-                        role: .destructive, action: { store.send(.setNavigation(.removeCustomTranslations)) }
-                    )
-                    .confirmationDialog(
-                        message: L10n.Localizable.ConfirmationDialog.Title.removeCustomTranslations,
-                        unwrapping: $store.route,
-                        case: \.removeCustomTranslations
-                    ) {
-                        Button(L10n.Localizable.ConfirmationDialog.Button.remove, role: .destructive) {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                                store.send(.onRemoveCustomTranslations)
+                    if enablesTagsExtension && !tagTranslatorEmpty {
+                        Toggle(L10n.Localizable.GeneralSettingView.Title.translatesTags, isOn: $translatesTags)
+                        Toggle(
+                            L10n.Localizable.GeneralSettingView.Title.showsTagsSearchSuggestion,
+                            isOn: $showsTagsSearchSuggestion
+                        )
+                        Toggle(L10n.Localizable.GeneralSettingView.Title.showsImagesInTags, isOn: $showsImagesInTags)
+                    }
+                    FilePicker(
+                        types: [.json], allowMultiple: false,
+                        title: L10n.Localizable.GeneralSettingView.Button.importCustomTranslations
+                    ) { urls in
+                        if let url = urls.first {
+                            store.send(.onTranslationsFilePicked(url))
+                        }
+                    }
+                    if tagTranslatorHasCustomTranslations {
+                        Button(
+                            L10n.Localizable.GeneralSettingView.Button.removeCustomTranslations,
+                            role: .destructive, action: { store.send(.setNavigation(.removeCustomTranslations)) }
+                        )
+                        .confirmationDialog(
+                            message: L10n.Localizable.ConfirmationDialog.Title.removeCustomTranslations,
+                            unwrapping: $store.route,
+                            case: \.removeCustomTranslations
+                        ) {
+                            Button(L10n.Localizable.ConfirmationDialog.Button.remove, role: .destructive) {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                                    store.send(.onRemoveCustomTranslations)
+                                }
                             }
                         }
                     }
                 }
-            }
-            Section(L10n.Localizable.GeneralSettingView.Section.Title.navigation) {
-                Toggle(
-                    L10n.Localizable.GeneralSettingView.Title.redirectsLinksToTheSelectedHost,
-                    isOn: $redirectsLinksToSelectedHost
-                )
-                Toggle(
-                    L10n.Localizable.GeneralSettingView.Title.detectsLinksFromClipboard,
-                    isOn: $detectsLinksFromClipboard
-                )
-            }
-            Section(L10n.Localizable.GeneralSettingView.Section.Title.security) {
-                HStack {
-                    Picker(
-                        L10n.Localizable.GeneralSettingView.Title.autoLock,
-                        selection: $autoLockPolicy
-                    ) {
-                        ForEach(AutoLockPolicy.allCases) { policy in
-                            Text(policy.value).tag(policy)
+                Section(L10n.Localizable.GeneralSettingView.Section.Title.navigation) {
+                    Toggle(
+                        L10n.Localizable.GeneralSettingView.Title.redirectsLinksToTheSelectedHost,
+                        isOn: $redirectsLinksToSelectedHost
+                    )
+                    Toggle(
+                        L10n.Localizable.GeneralSettingView.Title.detectsLinksFromClipboard,
+                        isOn: $detectsLinksFromClipboard
+                    )
+                }
+                Section(L10n.Localizable.GeneralSettingView.Section.Title.security) {
+                    HStack {
+                        Picker(
+                            L10n.Localizable.GeneralSettingView.Title.autoLock,
+                            selection: $autoLockPolicy
+                        ) {
+                            ForEach(AutoLockPolicy.allCases) { policy in
+                                Text(policy.value).tag(policy)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        if store.passcodeNotSet && autoLockPolicy != .never {
+                            Image(systemSymbol: .exclamationmarkTriangleFill).foregroundStyle(.yellow)
                         }
                     }
-                    .pickerStyle(.menu)
-                    if store.passcodeNotSet && autoLockPolicy != .never {
-                        Image(systemSymbol: .exclamationmarkTriangleFill).foregroundStyle(.yellow)
+                    VStack(alignment: .leading) {
+                        Text(L10n.Localizable.GeneralSettingView.Title.backgroundBlurRadius)
+                        HStack {
+                            Image(systemSymbol: .eye)
+                            Slider(value: $backgroundBlurRadius, in: 0...100, step: 10)
+                            Image(systemSymbol: .eyeSlash)
+                        }
                     }
                 }
-                VStack(alignment: .leading) {
-                    Text(L10n.Localizable.GeneralSettingView.Title.backgroundBlurRadius)
-                    HStack {
-                        Image(systemSymbol: .eye)
-                        Slider(value: $backgroundBlurRadius, in: 0...100, step: 10)
-                        Image(systemSymbol: .eyeSlash)
+                Section(L10n.Localizable.GeneralSettingView.Section.Title.caches) {
+                    Button {
+                        store.send(.setNavigation(.clearCache))
+                    } label: {
+                        HStack {
+                            Text(L10n.Localizable.GeneralSettingView.Button.clearImageCaches)
+                            Spacer()
+                            Text(store.diskImageCacheSize).foregroundStyle(.tint)
+                        }
+                        .foregroundColor(.primary)
                     }
-                }
-            }
-            Section(L10n.Localizable.GeneralSettingView.Section.Title.caches) {
-                Button {
-                    store.send(.setNavigation(.clearCache))
-                } label: {
-                    HStack {
-                        Text(L10n.Localizable.GeneralSettingView.Button.clearImageCaches)
-                        Spacer()
-                        Text(store.diskImageCacheSize).foregroundStyle(.tint)
-                    }
-                    .foregroundColor(.primary)
-                }
-                .confirmationDialog(
-                    message: L10n.Localizable.ConfirmationDialog.Title.clear,
-                    unwrapping: $store.route,
-                    case: \.clearCache
-                ) {
-                    Button(L10n.Localizable.ConfirmationDialog.Button.clear, role: .destructive) {
-                        store.send(.clearWebImageCache)
+                    .confirmationDialog(
+                        message: L10n.Localizable.ConfirmationDialog.Title.clear,
+                        unwrapping: $store.route,
+                        case: \.clearCache
+                    ) {
+                        Button(L10n.Localizable.ConfirmationDialog.Button.clear, role: .destructive) {
+                            store.send(.clearWebImageCache)
+                        }
                     }
                 }
             }
+            .animation(.default, value: tagTranslatorHasCustomTranslations)
+            .animation(.default, value: tagTranslatorLoadingState)
+            .animation(.default, value: enablesTagsExtension)
+            .animation(.default, value: tagTranslatorEmpty)
+            .onAppear {
+                store.send(.checkPasscodeSetting)
+                store.send(.calculateWebImageDiskCache)
+            }
+            .background(navigationLink)
+            .navigationTitle(L10n.Localizable.GeneralSettingView.Title.general)
         }
-        .animation(.default, value: tagTranslatorHasCustomTranslations)
-        .animation(.default, value: tagTranslatorLoadingState)
-        .animation(.default, value: enablesTagsExtension)
-        .animation(.default, value: tagTranslatorEmpty)
-        .onAppear {
-            store.send(.checkPasscodeSetting)
-            store.send(.calculateWebImageDiskCache)
-        }
-        .background(navigationLink)
-        .navigationTitle(L10n.Localizable.GeneralSettingView.Title.general)
     }
 
     private var navigationLink: some View {

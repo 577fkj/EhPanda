@@ -91,33 +91,35 @@ struct GalleryInfosView: View {
     }
 
     var body: some View {
-        GeometryReader { proxy in
-            List(infos) { info in
-                HStack {
+        WithPerceptionTracking {
+            GeometryReader { proxy in
+                List(infos) { info in
                     HStack {
-                        Text(info.title)
-                        Spacer()
-                    }
-                    .frame(width: proxy.size.width / 3)
-                    Spacer()
-                    Button {
-                        if let text = info.value {
-                            store.send(.copyText(text))
+                        HStack {
+                            Text(info.title)
+                            Spacer()
                         }
-                    } label: {
-                        Text(info.value ?? L10n.Localizable.GalleryInfosView.Value.none)
-                            .lineLimit(3).font(.caption)
-                            .foregroundStyle(.tint)
+                        .frame(width: proxy.size.width / 3)
+                        Spacer()
+                        Button {
+                            if let text = info.value {
+                                store.send(.copyText(text))
+                            }
+                        } label: {
+                            Text(info.value ?? L10n.Localizable.GalleryInfosView.Value.none)
+                                .lineLimit(3).font(.caption)
+                                .foregroundStyle(.tint)
+                        }
                     }
                 }
             }
+            .progressHUD(
+                config: store.hudConfig,
+                unwrapping: $store.route,
+                case: \.hud
+            )
+            .navigationTitle(L10n.Localizable.GalleryInfosView.Title.galleryInfos)
         }
-        .progressHUD(
-            config: store.hudConfig,
-            unwrapping: $store.route,
-            case: \.hud
-        )
-        .navigationTitle(L10n.Localizable.GalleryInfosView.Title.galleryInfos)
     }
 }
 

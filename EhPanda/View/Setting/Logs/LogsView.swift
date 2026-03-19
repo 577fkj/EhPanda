@@ -14,43 +14,45 @@ struct LogsView: View {
     }
 
     var body: some View {
-        ZStack {
-            List(store.logs) { log in
-                Button {
-                    store.send(.setNavigation(.log(log)))
-                } label: {
-                    LogCell(log: log, isLatest: log == store.logs.first)
-                }
-                .swipeActions {
+        WithPerceptionTracking {
+            ZStack {
+                List(store.logs) { log in
                     Button {
-                        store.send(.deleteLog(log.fileName))
+                        store.send(.setNavigation(.log(log)))
                     } label: {
-                        Image(systemSymbol: .trash)
+                        LogCell(log: log, isLatest: log == store.logs.first)
                     }
-                    .tint(.red)
+                    .swipeActions {
+                        Button {
+                            store.send(.deleteLog(log.fileName))
+                        } label: {
+                            Image(systemSymbol: .trash)
+                        }
+                        .tint(.red)
+                    }
+                    .foregroundColor(.primary)
                 }
-                .foregroundColor(.primary)
-            }
-            .opacity(store.logs.isEmpty ? 0 : 1)
+                .opacity(store.logs.isEmpty ? 0 : 1)
 
-            LoadingView().opacity(store.loadingState == .loading && store.logs.isEmpty ? 1 : 0)
+                LoadingView().opacity(store.loadingState == .loading && store.logs.isEmpty ? 1 : 0)
 
-            let error = store.loadingState.failed
-            ErrorView(error: error ?? .notFound) {
-                store.send(.fetchLogs)
-            }
-            .opacity(error != nil && store.logs.isEmpty ? 1 : 0)
-        }
-        .onAppear {
-            if store.logs.isEmpty {
-                DispatchQueue.main.async {
+                let error = store.loadingState.failed
+                ErrorView(error: error ?? .notFound) {
                     store.send(.fetchLogs)
                 }
+                .opacity(error != nil && store.logs.isEmpty ? 1 : 0)
             }
+            .onAppear {
+                if store.logs.isEmpty {
+                    DispatchQueue.main.async {
+                        store.send(.fetchLogs)
+                    }
+                }
+            }
+            .toolbar(content: toolbar)
+            .background(navigationLink)
+            .navigationTitle(L10n.Localizable.LogsView.Title.logs)
         }
-        .toolbar(content: toolbar)
-        .background(navigationLink)
-        .navigationTitle(L10n.Localizable.LogsView.Title.logs)
     }
 
     private var navigationLink: some View {

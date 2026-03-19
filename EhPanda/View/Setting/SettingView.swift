@@ -18,19 +18,21 @@ struct SettingView: View {
 
     // MARK: SettingView
     var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack(spacing: 0) {
-                    ForEach(SettingReducer.Route.allCases) { route in
-                        SettingRow(rowType: route) {
-                            store.send(.setNavigation($0))
+        WithPerceptionTracking {
+            NavigationView {
+                ScrollView {
+                    VStack(spacing: 0) {
+                        ForEach(SettingReducer.Route.allCases) { route in
+                            SettingRow(rowType: route) {
+                                store.send(.setNavigation($0))
+                            }
                         }
                     }
+                    .padding(.vertical, 40).padding(.horizontal)
                 }
-                .padding(.vertical, 40).padding(.horizontal)
+                .background(navigationLinks)
+                .navigationTitle(L10n.Localizable.SettingView.Title.setting)
             }
-            .background(navigationLinks)
-            .navigationTitle(L10n.Localizable.SettingView.Title.setting)
         }
     }
 }
