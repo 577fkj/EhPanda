@@ -8,7 +8,6 @@ import SFSafeSymbols
 import ComposableArchitecture
 
 struct TabBarView: View {
-    @Environment(\.scenePhase) private var scenePhase
     @Perception.Bindable private var store: StoreOf<AppReducer>
 
     init(store: StoreOf<AppReducer>) {
@@ -104,7 +103,12 @@ struct TabBarView: View {
             unwrapping: $store.appRouteState.route,
             case: \.hud
         )
-        .onChange(of: scenePhase) { newValue in store.send(.onScenePhaseChange(newValue)) }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in
+            store.send(.onScenePhaseChange(.inactive))
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+            store.send(.onScenePhaseChange(.active))
+        }
         .onOpenURL { store.send(.appRoute(.handleDeepLink($0))) }
     }
 }
