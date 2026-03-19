@@ -9,7 +9,7 @@ import ComposableArchitecture
 
 struct TabBarView: View {
     @Environment(\.scenePhase) private var scenePhase
-    @Bindable private var store: StoreOf<AppReducer>
+    @Perception.Bindable private var store: StoreOf<AppReducer>
 
     init(store: StoreOf<AppReducer>) {
         self.store = store

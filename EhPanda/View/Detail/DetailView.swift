@@ -9,7 +9,7 @@ import ComposableArchitecture
 import CommonMark
 
 struct DetailView: View {
-    @Bindable private var store: StoreOf<DetailReducer>
+    @Perception.Bindable private var store: StoreOf<DetailReducer>
     private let gid: String
     private let user: User
     @Binding private var setting: Setting

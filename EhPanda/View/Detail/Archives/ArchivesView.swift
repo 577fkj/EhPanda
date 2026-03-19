@@ -7,7 +7,7 @@ import SwiftUI
 import ComposableArchitecture
 
 struct ArchivesView: View {
-    @Bindable private var store: StoreOf<ArchivesReducer>
+    @Perception.Bindable private var store: StoreOf<ArchivesReducer>
     private let gid: String
     private let user: User
     private let galleryURL: URL

@@ -7,7 +7,7 @@ import SwiftUI
 import ComposableArchitecture
 
 struct QuickSearchView: View {
-    @Bindable private var store: StoreOf<QuickSearchReducer>
+    @Perception.Bindable private var store: StoreOf<QuickSearchReducer>
     private let searchAction: (String) -> Void
 
     @FocusState private var focusedField: QuickSearchReducer.FocusField?

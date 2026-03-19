@@ -11,7 +11,7 @@ import ComposableArchitecture
 struct ReadingView: View {
     @Environment(\.colorScheme) private var colorScheme
 
-    @Bindable var store: StoreOf<ReadingReducer>
+    @Perception.Bindable var store: StoreOf<ReadingReducer>
     private let gid: String
     @Binding private var setting: Setting
     private let blurRadius: Double

@@ -7,7 +7,7 @@ import SwiftUI
 import ComposableArchitecture
 
 struct EhSettingView: View {
-    @Bindable private var store: StoreOf<EhSettingReducer>
+    @Perception.Bindable private var store: StoreOf<EhSettingReducer>
     private let bypassesSNIFiltering: Bool
     private let blurRadius: Double
 

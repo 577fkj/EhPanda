@@ -7,7 +7,7 @@ import SwiftUI
 import ComposableArchitecture
 
 struct SearchRootView: View {
-    @Bindable private var store: StoreOf<SearchRootReducer>
+    @Perception.Bindable private var store: StoreOf<SearchRootReducer>
     private let user: User
     @Binding private var setting: Setting
     private let blurRadius: Double

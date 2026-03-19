@@ -7,7 +7,7 @@ import SwiftUI
 import ComposableArchitecture
 
 struct LoginView: View {
-    @Bindable private var store: StoreOf<LoginReducer>
+    @Perception.Bindable private var store: StoreOf<LoginReducer>
     private let bypassesSNIFiltering: Bool
     private let blurRadius: Double
 
