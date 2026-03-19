@@ -44,8 +44,12 @@ struct SearchRootView: View {
             } else {
                 // Workaround: Prevent the title disappearing issue.
                 if store.historyKeywords.isEmpty && store.historyGalleries.isEmpty {
-                    suggestionsContent
-                        .navigationSubtitle(Text(" "))
+                    if #available(iOS 26, *) {
+                        suggestionsContent
+                            .navigationSubtitle(Text(" "))
+                    } else {
+                        suggestionsContent
+                    }
                 } else {
                     suggestionsContent
                 }
