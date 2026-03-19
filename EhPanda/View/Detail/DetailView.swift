@@ -380,7 +380,7 @@ private struct HeaderSection: View {
                     }
                     .imageScale(.large)
                     .foregroundStyle(.tint)
-                    .buttonStyle(.glass(.regular.interactive()))
+                    .modifier(GlassInteractiveButtonStyleModifier())
                     .disabled(!CookieUtil.didLogin)
 
                     Button(action: navigateReadingAction) {
@@ -389,7 +389,7 @@ private struct HeaderSection: View {
                             .foregroundColor(.white).padding(.vertical, -2)
                             .padding(.horizontal, 2).lineLimit(1)
                     }
-                    .buttonStyle(.glassProminent)
+                    .modifier(GlassProminentButtonStyleModifier())
                     .buttonBorderShape(.capsule)
                 }
                 .minimumScaleFactor(0.5)
@@ -898,6 +898,26 @@ private struct GlassClearInteractiveModifier: ViewModifier {
             content.glassEffect(.clear.interactive(), in: shape)
         } else {
             content
+        }
+    }
+}
+
+private struct GlassInteractiveButtonStyleModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26, *) {
+            content.buttonStyle(.glass(.regular.interactive()))
+        } else {
+            content.buttonStyle(.borderless)
+        }
+    }
+}
+
+private struct GlassProminentButtonStyleModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26, *) {
+            content.buttonStyle(.glassProminent)
+        } else {
+            content.buttonStyle(.borderedProminent)
         }
     }
 }
