@@ -195,7 +195,7 @@ private struct EhProfileSection: View {
                 }
             }
         }
-        .onChange(of: ehProfile) { _, newValue in
+        .onChange(of: ehProfile) { newValue in
             performEhProfileAction(nil, nil, newValue.value)
         }
 
