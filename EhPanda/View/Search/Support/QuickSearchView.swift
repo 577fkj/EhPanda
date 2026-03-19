@@ -187,7 +187,11 @@ extension QuickSearchView {
 
         private func toolbar() -> some ToolbarContent {
             CustomToolbarItem {
-                Button(role: .confirm, action: confirmAction)
+                if #available(iOS 26, *) {
+                    Button(role: .confirm, action: confirmAction)
+                } else {
+                    Button(L10n.Localizable.EhSettingView.ToolbarItem.Button.done, action: confirmAction)
+                }
             }
         }
     }

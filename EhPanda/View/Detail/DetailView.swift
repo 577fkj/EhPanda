@@ -886,7 +886,19 @@ private struct CommentButton: View {
             .background(backgroundColor)
             .clipShape(shape)
         }
-        .glassEffect(.clear.interactive(), in: shape)
+        .modifier(GlassClearInteractiveModifier(shape: shape))
+    }
+}
+
+// MARK: GlassModifier
+private struct GlassClearInteractiveModifier: ViewModifier {
+    let shape: RoundedRectangle
+    func body(content: Content) -> some View {
+        if #available(iOS 26, *) {
+            content.glassEffect(.clear.interactive(), in: shape)
+        } else {
+            content
+        }
     }
 }
 

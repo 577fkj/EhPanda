@@ -185,7 +185,7 @@ private struct HathArchiveGrid: View {
             RoundedRectangle(cornerRadius: 10)
                 .stroke(borderColor, lineWidth: 1)
         )
-        .glassEffect(.clear.interactive(), in: .rect(cornerRadius: 10))
+        .modifier(GlassClearInteractiveModifier())
     }
 }
 
@@ -222,7 +222,7 @@ private struct DownloadButton: View {
             .background(backgroundColor)
             .animation(.default, value: backgroundColor)
             .clipShape(.rect(cornerRadius: 30))
-            .glassEffect(.regular.interactive())
+            .modifier(GlassInteractiveModifier())
             .padding(paddingInsets)
             .onTapGesture(perform: { if !isDisabled { action() }})
             .onLongPressGesture(
@@ -231,6 +231,27 @@ private struct DownloadButton: View {
                 pressing: { isPressing = $0 },
                 perform: {}
             )
+    }
+}
+
+// MARK: GlassModifiers
+private struct GlassClearInteractiveModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26, *) {
+            content.glassEffect(.clear.interactive(), in: .rect(cornerRadius: 10))
+        } else {
+            content
+        }
+    }
+}
+
+private struct GlassInteractiveModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26, *) {
+            content.glassEffect(.regular.interactive())
+        } else {
+            content.background(.thinMaterial)
+        }
     }
 }
 
