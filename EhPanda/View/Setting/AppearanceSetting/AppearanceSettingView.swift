@@ -38,68 +38,70 @@ struct AppearanceSettingView: View {
     }
 
     var body: some View {
-        Form {
-            Section {
-                Picker(
-                    L10n.Localizable.AppearanceSettingView.Title.theme,
-                    selection: $preferredColorScheme
-                ) {
-                    ForEach(PreferredColorScheme.allCases) { colorScheme in
-                        Text(colorScheme.value)
-                            .tag(colorScheme)
-                    }
-                }
-                .pickerStyle(.menu)
-
-                ColorPicker(L10n.Localizable.AppearanceSettingView.Title.tintColor, selection: $accentColor)
-
-                Button(L10n.Localizable.AppearanceSettingView.Button.appIcon) {
-                    store.send(.setNavigation(.appIcon))
-                }
-                .foregroundStyle(.primary)
-                .withArrow()
-            }
-            Section(L10n.Localizable.AppearanceSettingView.Section.Title.list) {
-                Picker(
-                    L10n.Localizable.AppearanceSettingView.Title.displayMode,
-                    selection: $listDisplayMode,
-                    content: {
-                        ForEach(ListDisplayMode.allCases) { listMode in
-                            Text(listMode.value)
-                                .tag(listMode)
+        WithPerceptionTracking {
+            Form {
+                Section {
+                    Picker(
+                        L10n.Localizable.AppearanceSettingView.Title.theme,
+                        selection: $preferredColorScheme
+                    ) {
+                        ForEach(PreferredColorScheme.allCases) { colorScheme in
+                            Text(colorScheme.value)
+                                .tag(colorScheme)
                         }
                     }
-                )
-                .pickerStyle(.menu)
+                    .pickerStyle(.menu)
 
-                Toggle(isOn: $showsTagsInList) {
-                    Text(L10n.Localizable.AppearanceSettingView.Title.showsTagsInList)
-                }
+                    ColorPicker(L10n.Localizable.AppearanceSettingView.Title.tintColor, selection: $accentColor)
 
-                Picker(
-                    L10n.Localizable.AppearanceSettingView.Title.maximumNumberOfTags,
-                    selection: $listTagsNumberMaximum
-                ) {
-                    Text(L10n.Localizable.AppearanceSettingView.Menu.Title.infite)
-                        .tag(0)
-
-                    ForEach(Array(stride(from: 5, through: 20, by: 5)), id: \.self) { num in
-                        Text("\(num)")
-                            .tag(num)
+                    Button(L10n.Localizable.AppearanceSettingView.Button.appIcon) {
+                        store.send(.setNavigation(.appIcon))
                     }
+                    .foregroundStyle(.primary)
+                    .withArrow()
                 }
-                .pickerStyle(.menu)
-                .disabled(!showsTagsInList)
+                Section(L10n.Localizable.AppearanceSettingView.Section.Title.list) {
+                    Picker(
+                        L10n.Localizable.AppearanceSettingView.Title.displayMode,
+                        selection: $listDisplayMode,
+                        content: {
+                            ForEach(ListDisplayMode.allCases) { listMode in
+                                Text(listMode.value)
+                                    .tag(listMode)
+                            }
+                        }
+                    )
+                    .pickerStyle(.menu)
+
+                    Toggle(isOn: $showsTagsInList) {
+                        Text(L10n.Localizable.AppearanceSettingView.Title.showsTagsInList)
+                    }
+
+                    Picker(
+                        L10n.Localizable.AppearanceSettingView.Title.maximumNumberOfTags,
+                        selection: $listTagsNumberMaximum
+                    ) {
+                        Text(L10n.Localizable.AppearanceSettingView.Menu.Title.infite)
+                            .tag(0)
+
+                        ForEach(Array(stride(from: 5, through: 20, by: 5)), id: \.self) { num in
+                            Text("\(num)")
+                                .tag(num)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .disabled(!showsTagsInList)
+                }
+                Section(L10n.Localizable.AppearanceSettingView.Section.Title.gallery) {
+                    Toggle(
+                        L10n.Localizable.AppearanceSettingView.Title.displaysJapaneseTitle,
+                        isOn: $displaysJapaneseTitle
+                    )
+                }
             }
-            Section(L10n.Localizable.AppearanceSettingView.Section.Title.gallery) {
-                Toggle(
-                    L10n.Localizable.AppearanceSettingView.Title.displaysJapaneseTitle,
-                    isOn: $displaysJapaneseTitle
-                )
-            }
+            .background(navigationLink)
+            .navigationTitle(L10n.Localizable.AppearanceSettingView.Title.appearance)
         }
-        .background(navigationLink)
-        .navigationTitle(L10n.Localizable.AppearanceSettingView.Title.appearance)
     }
 
     private var navigationLink: some View {

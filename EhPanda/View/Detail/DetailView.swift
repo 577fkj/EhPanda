@@ -195,17 +195,19 @@ struct DetailView: View {
     }
 
     var body: some View {
-        modalModifiers(content: { content })
-            .animation(.default, value: store.showsUserRating)
-            .animation(.default, value: store.showsFullTitle)
-            .animation(.default, value: store.galleryDetail)
-            .onAppear {
-                DispatchQueue.main.async {
-                    store.send(.onAppear(gid, setting.showsNewDawnGreeting))
+        WithPerceptionTracking {
+            modalModifiers(content: { content })
+                .animation(.default, value: store.showsUserRating)
+                .animation(.default, value: store.showsFullTitle)
+                .animation(.default, value: store.galleryDetail)
+                .onAppear {
+                    DispatchQueue.main.async {
+                        store.send(.onAppear(gid, setting.showsNewDawnGreeting))
+                    }
                 }
-            }
-            .background(navigationLinks)
-            .toolbar(content: toolbar)
+                .background(navigationLinks)
+                .toolbar(content: toolbar)
+        }
     }
 }
 

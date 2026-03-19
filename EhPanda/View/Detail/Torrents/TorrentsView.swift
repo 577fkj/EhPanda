@@ -20,44 +20,46 @@ struct TorrentsView: View {
     }
 
     var body: some View {
-        NavigationView {
-            ZStack {
-                List(store.torrents) { torrent in
-                    TorrentRow(torrent: torrent) { magnetURL in
-                        store.send(.copyText(magnetURL))
-                    }
-                    .swipeActions {
-                        Button {
-                            store.send(.fetchTorrent(torrent.hash, torrent.torrentURL))
-                        } label: {
-                            Image(systemSymbol: .arrowDownDocFill)
+        WithPerceptionTracking {
+            NavigationView {
+                ZStack {
+                    List(store.torrents) { torrent in
+                        TorrentRow(torrent: torrent) { magnetURL in
+                            store.send(.copyText(magnetURL))
+                        }
+                        .swipeActions {
+                            Button {
+                                store.send(.fetchTorrent(torrent.hash, torrent.torrentURL))
+                            } label: {
+                                Image(systemSymbol: .arrowDownDocFill)
+                            }
                         }
                     }
+
+                    LoadingView()
+                        .opacity(store.loadingState == .loading && store.torrents.isEmpty ? 1 : 0)
+
+                    let error = store.loadingState.failed
+                    ErrorView(error: error ?? .unknown) {
+                        store.send(.fetchGalleryTorrents(gid, token))
+                    }
+                    .opacity(error != nil && store.torrents.isEmpty ? 1 : 0)
                 }
-
-                LoadingView()
-                    .opacity(store.loadingState == .loading && store.torrents.isEmpty ? 1 : 0)
-
-                let error = store.loadingState.failed
-                ErrorView(error: error ?? .unknown) {
+                .sheet(item: $store.route.sending(\.setNavigation).share, id: \.absoluteString) { route in
+                    ActivityView(activityItems: [route.wrappedValue])
+                        .autoBlur(radius: blurRadius)
+                }
+                .progressHUD(
+                    config: store.hudConfig,
+                    unwrapping: $store.route,
+                    case: \.hud
+                )
+                .animation(.default, value: store.torrents)
+                .onAppear {
                     store.send(.fetchGalleryTorrents(gid, token))
                 }
-                .opacity(error != nil && store.torrents.isEmpty ? 1 : 0)
+                .navigationTitle(L10n.Localizable.TorrentsView.Title.torrents)
             }
-            .sheet(item: $store.route.sending(\.setNavigation).share, id: \.absoluteString) { route in
-                ActivityView(activityItems: [route.wrappedValue])
-                    .autoBlur(radius: blurRadius)
-            }
-            .progressHUD(
-                config: store.hudConfig,
-                unwrapping: $store.route,
-                case: \.hud
-            )
-            .animation(.default, value: store.torrents)
-            .onAppear {
-                store.send(.fetchGalleryTorrents(gid, token))
-            }
-            .navigationTitle(L10n.Localizable.TorrentsView.Title.torrents)
         }
     }
 }

@@ -25,33 +25,35 @@ struct SearchRootView: View {
     }
 
     var body: some View {
-        NavigationView {
-            if DeviceUtil.isPad {
-                suggestionsContent
-                    .sheet(item: $store.route.sending(\.setNavigation).detail, id: \.self) { gid in
-                        NavigationView {
-                            DetailView(
-                                store: store.scope(state: \.detailState.wrappedValue!, action: \.detail),
-                                gid: gid,
-                                user: user,
-                                setting: $setting,
-                                blurRadius: blurRadius,
-                                tagTranslator: tagTranslator
-                            )
+        WithPerceptionTracking {
+            NavigationView {
+                if DeviceUtil.isPad {
+                    suggestionsContent
+                        .sheet(item: $store.route.sending(\.setNavigation).detail, id: \.self) { gid in
+                            NavigationView {
+                                DetailView(
+                                    store: store.scope(state: \.detailState.wrappedValue!, action: \.detail),
+                                    gid: gid,
+                                    user: user,
+                                    setting: $setting,
+                                    blurRadius: blurRadius,
+                                    tagTranslator: tagTranslator
+                                )
+                            }
+                            .autoBlur(radius: blurRadius).environment(\.inSheet, true).navigationViewStyle(.stack)
                         }
-                        .autoBlur(radius: blurRadius).environment(\.inSheet, true).navigationViewStyle(.stack)
-                    }
-            } else {
-                // Workaround: Prevent the title disappearing issue.
-                if store.historyKeywords.isEmpty && store.historyGalleries.isEmpty {
-                    if #available(iOS 26, *) {
-                        suggestionsContent
-                            .navigationSubtitle(Text(" "))
+                } else {
+                    // Workaround: Prevent the title disappearing issue.
+                    if store.historyKeywords.isEmpty && store.historyGalleries.isEmpty {
+                        if #available(iOS 26, *) {
+                            suggestionsContent
+                                .navigationSubtitle(Text(" "))
+                        } else {
+                            suggestionsContent
+                        }
                     } else {
                         suggestionsContent
                     }
-                } else {
-                    suggestionsContent
                 }
             }
         }

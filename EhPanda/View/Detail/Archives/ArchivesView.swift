@@ -26,53 +26,55 @@ struct ArchivesView: View {
 
     // MARK: ArchiveView
     var body: some View {
-        NavigationView {
-            ZStack {
-                VStack {
-                    HathArchivesView(archives: store.hathArchives, selection: $store.selectedArchive)
+        WithPerceptionTracking {
+            NavigationView {
+                ZStack {
+                    VStack {
+                        HathArchivesView(archives: store.hathArchives, selection: $store.selectedArchive)
 
-                    Spacer()
+                        Spacer()
 
-                    if let credits = Int(user.credits ?? ""), let galleryPoints = Int(user.galleryPoints ?? "") {
-                        ArchiveFundsView(credits: credits, galleryPoints: galleryPoints)
+                        if let credits = Int(user.credits ?? ""), let galleryPoints = Int(user.galleryPoints ?? "") {
+                            ArchiveFundsView(credits: credits, galleryPoints: galleryPoints)
+                        }
+
+                        DownloadButton(isDisabled: store.selectedArchive == nil) {
+                            store.send(.fetchDownloadResponse(archiveURL))
+                        }
                     }
+                    .padding(.horizontal)
+                    .opacity(store.hathArchives.isEmpty ? 0 : 1)
 
-                    DownloadButton(isDisabled: store.selectedArchive == nil) {
-                        store.send(.fetchDownloadResponse(archiveURL))
+                    LoadingView()
+                        .opacity(
+                            store.loadingState == .loading
+                            && store.hathArchives.isEmpty ? 1 : 0
+                        )
+
+                    let error = store.loadingState.failed
+                    ErrorView(error: error ?? .unknown) {
+                        store.send(.fetchArchive(gid, galleryURL, archiveURL))
                     }
+                    .opacity(error != nil && store.hathArchives.isEmpty ? 1 : 0)
                 }
-                .padding(.horizontal)
-                .opacity(store.hathArchives.isEmpty ? 0 : 1)
-
-                LoadingView()
-                    .opacity(
-                        store.loadingState == .loading
-                        && store.hathArchives.isEmpty ? 1 : 0
-                    )
-
-                let error = store.loadingState.failed
-                ErrorView(error: error ?? .unknown) {
+                .progressHUD(
+                    config: store.communicatingHUDConfig,
+                    unwrapping: $store.route,
+                    case: \.communicatingHUD
+                )
+                .progressHUD(
+                    config: store.messageHUDConfig,
+                    unwrapping: $store.route,
+                    case: \.messageHUD
+                )
+                .animation(.default, value: store.hathArchives)
+                .animation(.default, value: user.galleryPoints)
+                .animation(.default, value: user.credits)
+                .onAppear {
                     store.send(.fetchArchive(gid, galleryURL, archiveURL))
                 }
-                .opacity(error != nil && store.hathArchives.isEmpty ? 1 : 0)
+                .navigationTitle(L10n.Localizable.ArchivesView.Title.archives)
             }
-            .progressHUD(
-                config: store.communicatingHUDConfig,
-                unwrapping: $store.route,
-                case: \.communicatingHUD
-            )
-            .progressHUD(
-                config: store.messageHUDConfig,
-                unwrapping: $store.route,
-                case: \.messageHUD
-            )
-            .animation(.default, value: store.hathArchives)
-            .animation(.default, value: user.galleryPoints)
-            .animation(.default, value: user.credits)
-            .onAppear {
-                store.send(.fetchArchive(gid, galleryURL, archiveURL))
-            }
-            .navigationTitle(L10n.Localizable.ArchivesView.Title.archives)
         }
     }
 }

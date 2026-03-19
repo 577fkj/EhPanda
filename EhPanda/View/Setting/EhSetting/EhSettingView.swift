@@ -22,40 +22,42 @@ struct EhSettingView: View {
 
     // MARK: EhSettingView
     var body: some View {
-        ZStack {
-            // Workaround: Stay if-else approach
-            if store.loadingState == .loading || store.submittingState == .loading {
-                LoadingView()
-                    .tint(nil)
-            } else if case .failed(let error) = store.loadingState {
-                ErrorView(error: error, action: { store.send(.fetchEhSetting) })
-                    .tint(nil)
+        WithPerceptionTracking {
+            ZStack {
+                // Workaround: Stay if-else approach
+                if store.loadingState == .loading || store.submittingState == .loading {
+                    LoadingView()
+                        .tint(nil)
+                } else if case .failed(let error) = store.loadingState {
+                    ErrorView(error: error, action: { store.send(.fetchEhSetting) })
+                        .tint(nil)
+                }
+                // Using `Binding.init` will crash the app
+                else if let ehSetting = Binding(unwrapping: $store.ehSetting),
+                        let ehProfile = Binding(unwrapping: $store.ehProfile)
+                {
+                    form(ehSetting: ehSetting, ehProfile: ehProfile)
+                        .transition(.opacity.animation(.default))
+                }
             }
-            // Using `Binding.init` will crash the app
-            else if let ehSetting = Binding(unwrapping: $store.ehSetting),
-                    let ehProfile = Binding(unwrapping: $store.ehProfile)
-            {
-                form(ehSetting: ehSetting, ehProfile: ehProfile)
-                    .transition(.opacity.animation(.default))
+            .onAppear {
+                if store.ehSetting == nil {
+                    store.send(.fetchEhSetting)
+                }
             }
-        }
-        .onAppear {
-            if store.ehSetting == nil {
-                store.send(.fetchEhSetting)
+            .onDisappear {
+                if let profileSet = store.ehSetting?.ehpandaProfile?.value {
+                    store.send(.setDefaultProfile(profileSet))
+                }
             }
-        }
-        .onDisappear {
-            if let profileSet = store.ehSetting?.ehpandaProfile?.value {
-                store.send(.setDefaultProfile(profileSet))
+            .sheet(item: $store.route.sending(\.setNavigation).webView, id: \.absoluteString) { url in
+                WebView(url: url)
+                    .ignoresSafeArea(edges: .bottom)
+                    .autoBlur(radius: blurRadius)
             }
+            .toolbar(content: toolbar)
+            .navigationTitle(L10n.Localizable.EhSettingView.Title.hostSettings(galleryHost.rawValue))
         }
-        .sheet(item: $store.route.sending(\.setNavigation).webView, id: \.absoluteString) { url in
-            WebView(url: url)
-                .ignoresSafeArea(edges: .bottom)
-                .autoBlur(radius: blurRadius)
-        }
-        .toolbar(content: toolbar)
-        .navigationTitle(L10n.Localizable.EhSettingView.Title.hostSettings(galleryHost.rawValue))
     }
     // MARK: Form
     private func form(ehSetting: Binding<EhSetting>, ehProfile: Binding<EhProfile>) -> some View {
