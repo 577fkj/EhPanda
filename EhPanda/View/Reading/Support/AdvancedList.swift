@@ -32,6 +32,17 @@ where PageView: View, Element: Equatable, ID: Hashable, G: Gesture {
     }
 
     var body: some View {
+        if #available(iOS 18, *) {
+            iOS18Body
+        } else if #available(iOS 17, *) {
+            iOS17Body
+        } else {
+            legacyBody
+        }
+    }
+
+    @available(iOS 18, *)
+    private var iOS18Body: some View {
         ScrollViewReader { proxy in
             ScrollView(showsIndicators: false) {
                 LazyVStack(spacing: spacing) {
@@ -55,6 +66,51 @@ where PageView: View, Element: Equatable, ID: Hashable, G: Gesture {
             }
             .onChange(of: pagerModel.index) { _, newValue in
                 tryScrollTo(id: newValue + 1, proxy: proxy)
+            }
+        }
+    }
+
+    @available(iOS 17, *)
+    private var iOS17Body: some View {
+        ScrollViewReader { proxy in
+            ScrollView(showsIndicators: false) {
+                LazyVStack(spacing: spacing) {
+                    ForEach(data, id: id) { index in
+                        content(index)
+                            .gesture(gesture)
+                    }
+                }
+                .scrollTargetLayout()
+                .onAppear(perform: { tryScrollTo(id: pagerModel.index + 1, proxy: proxy) })
+            }
+            .scrollPosition(id: $scrollPositionID, anchor: .center)
+            .onChange(of: scrollPositionID) { _, newValue in
+                guard let index = newValue, !performingChanges else { return }
+                performingChanges = true
+                pagerModel.update(.new(index: index - 1))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    performingChanges = false
+                }
+            }
+            .onChange(of: pagerModel.index) { _, newValue in
+                tryScrollTo(id: newValue + 1, proxy: proxy)
+            }
+        }
+    }
+
+    private var legacyBody: some View {
+        ScrollViewReader { proxy in
+            ScrollView(showsIndicators: false) {
+                LazyVStack(spacing: spacing) {
+                    ForEach(data, id: id) { index in
+                        content(index)
+                            .gesture(gesture)
+                    }
+                }
+                .onAppear(perform: { proxy.scrollTo(pagerModel.index + 1, anchor: .center) })
+            }
+            .onChange(of: pagerModel.index) { newValue in
+                proxy.scrollTo(newValue + 1, anchor: .center)
             }
         }
     }

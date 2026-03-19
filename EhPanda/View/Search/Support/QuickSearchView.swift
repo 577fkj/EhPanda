@@ -7,7 +7,7 @@ import SwiftUI
 import ComposableArchitecture
 
 struct QuickSearchView: View {
-    @Bindable private var store: StoreOf<QuickSearchReducer>
+    @Perception.Bindable private var store: StoreOf<QuickSearchReducer>
     private let searchAction: (String) -> Void
 
     @FocusState private var focusedField: QuickSearchReducer.FocusField?
@@ -187,7 +187,11 @@ extension QuickSearchView {
 
         private func toolbar() -> some ToolbarContent {
             CustomToolbarItem {
-                Button(role: .confirm, action: confirmAction)
+                if #available(iOS 26, *) {
+                    Button(role: .confirm, action: confirmAction)
+                } else {
+                    Button(L10n.Localizable.EhSettingView.ToolbarItem.Button.done, action: confirmAction)
+                }
             }
         }
     }

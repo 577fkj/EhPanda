@@ -36,28 +36,26 @@ extension View {
 
     func synchronize<Value: Equatable>(
         _ first: Binding<Value>,
-        _ second: Binding<Value>,
-        initial: (first: Bool, second: Bool) = (false, false)
+        _ second: Binding<Value>
     ) -> some View {
         self
-            .onChange(of: first.wrappedValue, initial: initial.first) { _, newValue in
+            .onChange(of: first.wrappedValue) { newValue in
                 second.wrappedValue = newValue
             }
-            .onChange(of: second.wrappedValue, initial: initial.second) { _, newValue in
+            .onChange(of: second.wrappedValue) { newValue in
                 first.wrappedValue = newValue
             }
     }
 
-    func synchronize<Value>(
+    func synchronize<Value: Equatable>(
         _ first: Binding<Value>,
-        _ second: FocusState<Value>.Binding,
-        initial: (first: Bool, second: Bool) = (false, false)
+        _ second: FocusState<Value>.Binding
     ) -> some View {
         self
-            .onChange(of: first.wrappedValue, initial: initial.first) { _, newValue in
+            .onChange(of: first.wrappedValue) { newValue in
                 second.wrappedValue = newValue
             }
-            .onChange(of: second.wrappedValue, initial: initial.second) { _, newValue in
+            .onChange(of: second.wrappedValue) { newValue in
                 first.wrappedValue = newValue
             }
     }

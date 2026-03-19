@@ -126,7 +126,18 @@ struct AlertViewButton: View {
                 .textCase(.uppercase)
         }
         .buttonBorderShape(.capsule)
-        .buttonStyle(.glass)
+        .modifier(GlassButtonStyleModifier())
+    }
+}
+
+// MARK: GlassModifier
+private struct GlassButtonStyleModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26, *) {
+            content.buttonStyle(.glass)
+        } else {
+            content.buttonStyle(.bordered)
+        }
     }
 }
 

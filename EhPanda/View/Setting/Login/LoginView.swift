@@ -7,7 +7,7 @@ import SwiftUI
 import ComposableArchitecture
 
 struct LoginView: View {
-    @Bindable private var store: StoreOf<LoginReducer>
+    @Perception.Bindable private var store: StoreOf<LoginReducer>
     private let bypassesSNIFiltering: Bool
     private let blurRadius: Double
 
@@ -62,7 +62,7 @@ struct LoginView: View {
                     .font(.title)
                     .foregroundStyle(store.loginButtonColor)
                     .disabled(store.loginButtonDisabled)
-                    .glassEffect(.regular.interactive(), in: .circle)
+                    .modifier(GlassCircleButtonModifier())
                     .clipShape(.circle)
                     .padding(.top, 30)
                 }
@@ -141,7 +141,28 @@ private struct LoginTextField: View {
             .disableAutocorrection(true)
             .keyboardType(isPassword ? .asciiCapable : .default)
             .padding(10)
-            .glassEffect(.regular.tint(Color(.systemGray5)), in: .rect(cornerRadius: 8))
+            .modifier(GlassRoundedRectModifier())
+        }
+    }
+}
+
+// MARK: GlassModifiers
+private struct GlassCircleButtonModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26, *) {
+            content.glassEffect(.regular.interactive(), in: .circle)
+        } else {
+            content.background(.thinMaterial, in: .circle)
+        }
+    }
+}
+
+private struct GlassRoundedRectModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26, *) {
+            content.glassEffect(.regular.tint(Color(.systemGray5)), in: .rect(cornerRadius: 8))
+        } else {
+            content.background(Color(.systemGray6), in: .rect(cornerRadius: 8))
         }
     }
 }

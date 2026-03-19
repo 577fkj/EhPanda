@@ -124,7 +124,7 @@ private struct UpperPanel: View {
                         .font(.title2)
                         .frame(width: 44, height: 44)
                 }
-                .glassEffect(.regular.interactive())
+                .modifier(GlassInteractiveModifier())
 
                 Text(title)
                     .font(.title2)
@@ -133,7 +133,7 @@ private struct UpperPanel: View {
                     .lineLimit(1)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .glassEffect(.regular.interactive())
+                    .modifier(GlassInteractiveModifier())
             }
 
             Spacer()
@@ -210,7 +210,7 @@ private struct UpperPanel: View {
             }
             .padding(.vertical, 12)
             .padding(.horizontal, 20)
-            .glassEffect(.regular.interactive())
+            .modifier(GlassInteractiveModifier())
         }
         .foregroundStyle(.primary)
         .padding(.horizontal, 20)
@@ -252,7 +252,7 @@ private struct LowerPanel<G: Gesture>: View {
                     .font(.title2)
                     .frame(width: 44, height: 44)
             }
-            .glassEffect(.regular.interactive())
+            .modifier(GlassInteractiveModifier())
             .gesture(dismissGesture)
             .opacity(showsSliderPreview ? 0 : 1)
 
@@ -290,7 +290,7 @@ private struct LowerPanel<G: Gesture>: View {
                         .padding()
                 }
             }
-            .glassEffect(in: .rect(cornerRadius: 16))
+            .modifier(GlassRoundedRectModifier(cornerRadius: 16))
             .padding(.horizontal, SliderPreivew.outerPadding)
         }
     }
@@ -385,5 +385,27 @@ private extension SliderPreivew {
     }
     func checkIndex(_ index: Int) -> Bool {
         index >= Int(range.lowerBound) && index <= Int(range.upperBound)
+    }
+}
+
+// MARK: GlassModifiers
+private struct GlassInteractiveModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26, *) {
+            content.glassEffect(.regular.interactive())
+        } else {
+            content.background(.ultraThinMaterial, in: .capsule)
+        }
+    }
+}
+
+private struct GlassRoundedRectModifier: ViewModifier {
+    let cornerRadius: CGFloat
+    func body(content: Content) -> some View {
+        if #available(iOS 26, *) {
+            content.glassEffect(in: .rect(cornerRadius: cornerRadius))
+        } else {
+            content.background(.ultraThinMaterial, in: .rect(cornerRadius: cornerRadius))
+        }
     }
 }
