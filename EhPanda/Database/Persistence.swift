@@ -9,8 +9,8 @@ struct PersistenceController {
     static let shared = PersistenceController()
     let migrator = CoreDataMigrator()
 
-    let container: NSPersistentCloudKitContainer = {
-        let container = NSPersistentCloudKitContainer(name: "Model")
+    let container: NSPersistentContainer = {
+        let container = NSPersistentContainer(name: "Model")
         let description = container.persistentStoreDescriptions.first
         description?.shouldInferMappingModelAutomatically = false
         description?.shouldMigrateStoreAutomatically = false
@@ -37,6 +37,7 @@ extension PersistenceController {
                 try NSPersistentStoreCoordinator.destroyStore(at: storeURL)
             } catch {
                 completion(.failure(error as? AppError ?? .databaseCorrupted(nil)))
+                return
             }
             container.loadPersistentStores { _, error in
                 guard error == nil else {
@@ -74,10 +75,10 @@ extension PersistenceController {
             DispatchQueue.global(qos: .userInitiated).async {
                 do {
                     try migrator.migrateStore(at: storeURL, toVersion: try CoreDataMigrationVersion.current())
+                    completion(.success(()))
                 } catch {
                     completion(.failure(error as? AppError ?? .databaseCorrupted(nil)))
                 }
-                completion(.success(()))
             }
         } else {
             completion(.success(()))
