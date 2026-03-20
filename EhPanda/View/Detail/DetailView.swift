@@ -9,7 +9,7 @@ import ComposableArchitecture
 import CommonMark
 
 struct DetailView: View {
-    @Bindable private var store: StoreOf<DetailReducer>
+    @Perception.Bindable private var store: StoreOf<DetailReducer>
     private let gid: String
     private let user: User
     @Binding private var setting: Setting
@@ -195,17 +195,19 @@ struct DetailView: View {
     }
 
     var body: some View {
-        modalModifiers(content: { content })
-            .animation(.default, value: store.showsUserRating)
-            .animation(.default, value: store.showsFullTitle)
-            .animation(.default, value: store.galleryDetail)
-            .onAppear {
-                DispatchQueue.main.async {
-                    store.send(.onAppear(gid, setting.showsNewDawnGreeting))
+        WithPerceptionTracking {
+            modalModifiers(content: { content })
+                .animation(.default, value: store.showsUserRating)
+                .animation(.default, value: store.showsFullTitle)
+                .animation(.default, value: store.galleryDetail)
+                .onAppear {
+                    DispatchQueue.main.async {
+                        store.send(.onAppear(gid, setting.showsNewDawnGreeting))
+                    }
                 }
-            }
-            .background(navigationLinks)
-            .toolbar(content: toolbar)
+                .background(navigationLinks)
+                .toolbar(content: toolbar)
+        }
     }
 }
 
@@ -380,7 +382,7 @@ private struct HeaderSection: View {
                     }
                     .imageScale(.large)
                     .foregroundStyle(.tint)
-                    .buttonStyle(.glass(.regular.interactive()))
+                    .modifier(GlassInteractiveButtonStyleModifier())
                     .disabled(!CookieUtil.didLogin)
 
                     Button(action: navigateReadingAction) {
@@ -389,7 +391,7 @@ private struct HeaderSection: View {
                             .foregroundColor(.white).padding(.vertical, -2)
                             .padding(.horizontal, 2).lineLimit(1)
                     }
-                    .buttonStyle(.glassProminent)
+                    .modifier(GlassProminentButtonStyleModifier())
                     .buttonBorderShape(.capsule)
                 }
                 .minimumScaleFactor(0.5)
@@ -886,7 +888,39 @@ private struct CommentButton: View {
             .background(backgroundColor)
             .clipShape(shape)
         }
-        .glassEffect(.clear.interactive(), in: shape)
+        .modifier(GlassClearInteractiveModifier(shape: shape))
+    }
+}
+
+// MARK: GlassModifier
+private struct GlassClearInteractiveModifier: ViewModifier {
+    let shape: RoundedRectangle
+    func body(content: Content) -> some View {
+        if #available(iOS 26, *) {
+            content.glassEffect(.clear.interactive(), in: shape)
+        } else {
+            content
+        }
+    }
+}
+
+private struct GlassInteractiveButtonStyleModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26, *) {
+            content.buttonStyle(.glass(.regular.interactive()))
+        } else {
+            content.buttonStyle(.borderless)
+        }
+    }
+}
+
+private struct GlassProminentButtonStyleModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26, *) {
+            content.buttonStyle(.glassProminent)
+        } else {
+            content.buttonStyle(.borderedProminent)
+        }
     }
 }
 

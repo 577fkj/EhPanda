@@ -69,7 +69,18 @@ struct LaboratoryCell: View {
         .cornerRadius(15)
         .lineLimit(1)
         .animation(.default, value: isOn)
-        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 15))
+        .modifier(GlassLaboratoryModifier())
+    }
+}
+
+// MARK: GlassModifier
+private struct GlassLaboratoryModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 26, *) {
+            content.glassEffect(.regular.interactive(), in: .rect(cornerRadius: 15))
+        } else {
+            content.background(.thinMaterial, in: .rect(cornerRadius: 15))
+        }
     }
 }
 

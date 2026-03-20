@@ -11,7 +11,7 @@ import ComposableArchitecture
 struct ReadingView: View {
     @Environment(\.colorScheme) private var colorScheme
 
-    @Bindable var store: StoreOf<ReadingReducer>
+    @Perception.Bindable var store: StoreOf<ReadingReducer>
     private let gid: String
     @Binding private var setting: Setting
     private let blurRadius: Double
@@ -37,56 +37,58 @@ struct ReadingView: View {
     }
 
     var body: some View {
-        changeTriggers(content: { content })
-            .sheet(item: $store.route.sending(\.setNavigation).readingSetting) { _ in
-                NavigationView {
-                    ReadingSettingView(
-                        readingDirection: $setting.readingDirection,
-                        prefetchLimit: $setting.prefetchLimit,
-                        enablesLandscape: $setting.enablesLandscape,
-                        contentDividerHeight: $setting.contentDividerHeight,
-                        maximumScaleFactor: $setting.maximumScaleFactor,
-                        doubleTapScaleFactor: $setting.doubleTapScaleFactor
-                    )
-                    .toolbar {
-                        if !DeviceUtil.isPad && DeviceUtil.isLandscape {
-                            CustomToolbarItem(placement: .cancellationAction) {
-                                Button {
-                                    store.send(.setNavigation(nil))
-                                } label: {
-                                    Image(systemSymbol: .chevronDown)
+        WithPerceptionTracking {
+            changeTriggers(content: { content })
+                .sheet(item: $store.route.sending(\.setNavigation).readingSetting) { _ in
+                    NavigationView {
+                        ReadingSettingView(
+                            readingDirection: $setting.readingDirection,
+                            prefetchLimit: $setting.prefetchLimit,
+                            enablesLandscape: $setting.enablesLandscape,
+                            contentDividerHeight: $setting.contentDividerHeight,
+                            maximumScaleFactor: $setting.maximumScaleFactor,
+                            doubleTapScaleFactor: $setting.doubleTapScaleFactor
+                        )
+                        .toolbar {
+                            if !DeviceUtil.isPad && DeviceUtil.isLandscape {
+                                CustomToolbarItem(placement: .cancellationAction) {
+                                    Button {
+                                        store.send(.setNavigation(nil))
+                                    } label: {
+                                        Image(systemSymbol: .chevronDown)
+                                    }
                                 }
                             }
                         }
                     }
-                }
-                .accentColor(setting.accentColor)
-                .tint(setting.accentColor)
-                .autoBlur(radius: blurRadius)
-                .navigationViewStyle(.stack)
-            }
-            .sheet(item: $store.route.sending(\.setNavigation).share) { shareItemBox in
-                ActivityView(activityItems: [shareItemBox.wrappedValue.associatedValue])
                     .accentColor(setting.accentColor)
+                    .tint(setting.accentColor)
                     .autoBlur(radius: blurRadius)
-            }
-            .progressHUD(
-                config: store.hudConfig,
-                unwrapping: $store.route,
-                case: \.hud
-            )
+                    .navigationViewStyle(.stack)
+                }
+                .sheet(item: $store.route.sending(\.setNavigation).share) { shareItemBox in
+                    ActivityView(activityItems: [shareItemBox.wrappedValue.associatedValue])
+                        .accentColor(setting.accentColor)
+                        .autoBlur(radius: blurRadius)
+                }
+                .progressHUD(
+                    config: store.hudConfig,
+                    unwrapping: $store.route,
+                    case: \.hud
+                )
 
-            .animation(.linear(duration: 0.1), value: gestureHandler.offset)
-            .animation(.default, value: liveTextHandler.enablesLiveText)
-            .animation(.default, value: liveTextHandler.liveTextGroups)
-            .animation(.default, value: gestureHandler.scale)
-            .animation(.default, value: store.showsPanel)
-            .statusBar(hidden: !store.showsPanel)
-            .onDisappear {
-                liveTextHandler.cancelRequests()
-                setAutoPlayPolocy(.off)
-            }
-            .onAppear { store.send(.onAppear(gid, setting.enablesLandscape)) }
+                .animation(.linear(duration: 0.1), value: gestureHandler.offset)
+                .animation(.default, value: liveTextHandler.enablesLiveText)
+                .animation(.default, value: liveTextHandler.liveTextGroups)
+                .animation(.default, value: gestureHandler.scale)
+                .animation(.default, value: store.showsPanel)
+                .statusBar(hidden: !store.showsPanel)
+                .onDisappear {
+                    liveTextHandler.cancelRequests()
+                    setAutoPlayPolocy(.off)
+                }
+                .onAppear { store.send(.onAppear(gid, setting.enablesLandscape)) }
+        }
     }
 
     var content: some View {
@@ -150,7 +152,7 @@ struct ReadingView: View {
     private func changeTriggers<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         content()
              // Page
-            .onChange(of: page.index) { _, newValue in
+            .onChange(of: page.index) { newValue in
                 Logger.info("page.index changed", context: ["pageIndex": newValue])
                 let newValue = pageHandler.mapFromPager(
                     index: newValue, pageCount: store.gallery.pageCount, setting: setting
@@ -160,24 +162,24 @@ struct ReadingView: View {
                     store.send(.syncReadingProgress(.init(newValue)))
                 }
             }
-            .onChange(of: pageHandler.sliderValue) { _, newValue in
+            .onChange(of: pageHandler.sliderValue) { newValue in
                 Logger.info("pageHandler.sliderValue changed", context: ["sliderValue": newValue])
                 if !store.showsSliderPreview {
                     setPageIndex(sliderValue: newValue)
                 }
             }
-            .onChange(of: store.showsSliderPreview) { _, newValue in
+            .onChange(of: store.showsSliderPreview) { newValue in
                 Logger.info("store.showsSliderPreview changed", context: ["isShown": newValue])
                 if !newValue { setPageIndex(sliderValue: pageHandler.sliderValue) }
                 setAutoPlayPolocy(.off)
             }
-            .onChange(of: store.readingProgress) { _, newValue in
+            .onChange(of: store.readingProgress) { newValue in
                 Logger.info("store.readingProgress changed", context: ["readingProgress": newValue])
                 pageHandler.sliderValue = .init(newValue)
             }
 
             // AutoPlay
-            .onChange(of: store.route) { _, newValue in
+            .onChange(of: store.route) { newValue in
                 Logger.info("store.route changed", context: ["route": newValue])
                 if ![.hud, .none].contains(newValue) {
                     setAutoPlayPolocy(.off)
@@ -185,11 +187,11 @@ struct ReadingView: View {
             }
 
             // LiveText
-            .onChange(of: liveTextHandler.enablesLiveText) { _, newValue in
+            .onChange(of: liveTextHandler.enablesLiveText) { newValue in
                 Logger.info("liveTextHandler.enablesLiveText changed", context: ["isEnabled": newValue])
                 if newValue { store.webImageLoadSuccessIndices.forEach(analyzeImageForLiveText) }
             }
-            .onChange(of: store.webImageLoadSuccessIndices) { _, newValue in
+            .onChange(of: store.webImageLoadSuccessIndices) { newValue in
                 Logger.info("store.webImageLoadSuccessIndices changed", context: [
                     "count": store.webImageLoadSuccessIndices.count
                 ])
@@ -199,7 +201,7 @@ struct ReadingView: View {
             }
 
             // Orientation
-            .onChange(of: setting.enablesLandscape) { _, newValue in
+            .onChange(of: setting.enablesLandscape) { newValue in
                 Logger.info("setting.enablesLandscape changed", context: ["newValue": newValue])
                 store.send(.setOrientationPortrait(!newValue))
             }

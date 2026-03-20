@@ -8,7 +8,7 @@ import Kingfisher
 import ComposableArchitecture
 
 struct CommentsView: View {
-    @Bindable private var store: StoreOf<CommentsReducer>
+    @Perception.Bindable private var store: StoreOf<CommentsReducer>
     private let gid: String
     private let token: String
     private let apiKey: String
@@ -39,89 +39,91 @@ struct CommentsView: View {
 
     // MARK: CommentView
     var body: some View {
-        ScrollViewReader { proxy in
-            List(comments) { comment in
-                CommentCell(
-                    gid: gid, comment: comment,
-                    linkAction: { store.send(.handleCommentLink($0)) }
-                )
-                .opacity(
-                    comment.commentID == store.scrollCommentID
-                    ? store.scrollRowOpacity : 1
-                )
-                .swipeActions(edge: .leading) {
-                    if comment.votable {
-                        Button {
-                            store.send(.voteComment(gid, token, apiKey, comment.commentID, -1))
-                        } label: {
-                            Image(systemSymbol: .handThumbsdown)
+        WithPerceptionTracking {
+            ScrollViewReader { proxy in
+                List(comments) { comment in
+                    CommentCell(
+                        gid: gid, comment: comment,
+                        linkAction: { store.send(.handleCommentLink($0)) }
+                    )
+                    .opacity(
+                        comment.commentID == store.scrollCommentID
+                        ? store.scrollRowOpacity : 1
+                    )
+                    .swipeActions(edge: .leading) {
+                        if comment.votable {
+                            Button {
+                                store.send(.voteComment(gid, token, apiKey, comment.commentID, -1))
+                            } label: {
+                                Image(systemSymbol: .handThumbsdown)
+                            }
+                            .tint(.red)
                         }
-                        .tint(.red)
+                    }
+                    .swipeActions(edge: .trailing) {
+                        if comment.votable {
+                            Button {
+                                store.send(.voteComment(gid, token, apiKey, comment.commentID, 1))
+                            } label: {
+                                Image(systemSymbol: .handThumbsup)
+                            }
+                            .tint(.green)
+                        }
+                        if comment.editable {
+                            Button {
+                                store.send(.setCommentContent(comment.plainTextContent))
+                                store.send(.setNavigation(.postComment(comment.commentID)))
+                            } label: {
+                                Image(systemSymbol: .squareAndPencil)
+                            }
+                        }
                     }
                 }
-                .swipeActions(edge: .trailing) {
-                    if comment.votable {
-                        Button {
-                            store.send(.voteComment(gid, token, apiKey, comment.commentID, 1))
-                        } label: {
-                            Image(systemSymbol: .handThumbsup)
-                        }
-                        .tint(.green)
-                    }
-                    if comment.editable {
-                        Button {
-                            store.send(.setCommentContent(comment.plainTextContent))
-                            store.send(.setNavigation(.postComment(comment.commentID)))
-                        } label: {
-                            Image(systemSymbol: .squareAndPencil)
+                .onAppear {
+                    if let scrollCommentID = store.scrollCommentID {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.75) {
+                            withAnimation {
+                                proxy.scrollTo(scrollCommentID, anchor: .top)
+                            }
                         }
                     }
                 }
             }
-            .onAppear {
-                if let scrollCommentID = store.scrollCommentID {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.75) {
-                        withAnimation {
-                            proxy.scrollTo(scrollCommentID, anchor: .top)
+            .sheet(item: $store.route.sending(\.setNavigation).postComment, id: \.self) { route in
+                let hasCommentID = !route.wrappedValue.isEmpty
+                PostCommentView(
+                    title: hasCommentID
+                    ? L10n.Localizable.PostCommentView.Title.editComment
+                    : L10n.Localizable.PostCommentView.Title.postComment,
+                    content: $store.commentContent,
+                    isFocused: $store.postCommentFocused,
+                    postAction: {
+                        if hasCommentID {
+                            store.send(.postComment(galleryURL, route.wrappedValue))
+                        } else {
+                            store.send(.postComment(galleryURL))
                         }
-                    }
-                }
+                        store.send(.setNavigation(nil))
+                    },
+                    cancelAction: { store.send(.setNavigation(nil)) },
+                    onAppearAction: { store.send(.onPostCommentAppear) }
+                )
+                .accentColor(setting.accentColor)
+                .autoBlur(radius: blurRadius)
             }
-        }
-        .sheet(item: $store.route.sending(\.setNavigation).postComment, id: \.self) { route in
-            let hasCommentID = !route.wrappedValue.isEmpty
-            PostCommentView(
-                title: hasCommentID
-                ? L10n.Localizable.PostCommentView.Title.editComment
-                : L10n.Localizable.PostCommentView.Title.postComment,
-                content: $store.commentContent,
-                isFocused: $store.postCommentFocused,
-                postAction: {
-                    if hasCommentID {
-                        store.send(.postComment(galleryURL, route.wrappedValue))
-                    } else {
-                        store.send(.postComment(galleryURL))
-                    }
-                    store.send(.setNavigation(nil))
-                },
-                cancelAction: { store.send(.setNavigation(nil)) },
-                onAppearAction: { store.send(.onPostCommentAppear) }
+            .progressHUD(
+                config: store.hudConfig,
+                unwrapping: $store.route,
+                case: \.hud
             )
-            .accentColor(setting.accentColor)
-            .autoBlur(radius: blurRadius)
+            .animation(.default, value: store.scrollRowOpacity)
+            .onAppear {
+                store.send(.onAppear)
+            }
+            .background(navigationLink)
+            .toolbar(content: toolbar)
+            .navigationTitle(L10n.Localizable.CommentsView.Title.comments)
         }
-        .progressHUD(
-            config: store.hudConfig,
-            unwrapping: $store.route,
-            case: \.hud
-        )
-        .animation(.default, value: store.scrollRowOpacity)
-        .onAppear {
-            store.send(.onAppear)
-        }
-        .background(navigationLink)
-        .toolbar(content: toolbar)
-        .navigationTitle(L10n.Localizable.CommentsView.Title.comments)
     }
 
     private func toolbar() -> some ToolbarContent {

@@ -7,7 +7,7 @@ import SwiftUI
 import ComposableArchitecture
 
 struct HistoryView: View {
-    @Bindable private var store: StoreOf<HistoryReducer>
+    @Perception.Bindable private var store: StoreOf<HistoryReducer>
     private let user: User
     @Binding private var setting: Setting
     private let blurRadius: Double
@@ -25,45 +25,47 @@ struct HistoryView: View {
     }
 
     var body: some View {
-        let content =
-        GenericList(
-            galleries: store.filteredGalleries,
-            setting: setting,
-            pageNumber: nil,
-            loadingState: store.loadingState,
-            footerLoadingState: .idle,
-            fetchAction: { store.send(.fetchGalleries) },
-            navigateAction: { store.send(.setNavigation(.detail($0))) },
-            translateAction: {
-                tagTranslator.lookup(word: $0, returnOriginal: !setting.translatesTags)
-            }
-        )
-        .searchable(text: $store.keyword, prompt: L10n.Localizable.Searchable.Prompt.filter)
-        .onAppear {
-            if store.galleries.isEmpty {
-                DispatchQueue.main.async {
-                    store.send(.fetchGalleries)
+        WithPerceptionTracking {
+            let content =
+            GenericList(
+                galleries: store.filteredGalleries,
+                setting: setting,
+                pageNumber: nil,
+                loadingState: store.loadingState,
+                footerLoadingState: .idle,
+                fetchAction: { store.send(.fetchGalleries) },
+                navigateAction: { store.send(.setNavigation(.detail($0))) },
+                translateAction: {
+                    tagTranslator.lookup(word: $0, returnOriginal: !setting.translatesTags)
                 }
-            }
-        }
-        .background(navigationLink)
-        .toolbar(content: toolbar)
-        .navigationTitle(L10n.Localizable.HistoryView.Title.history)
-
-        if DeviceUtil.isPad {
-            content
-                .sheet(item: $store.route.sending(\.setNavigation).detail, id: \.self) { route in
-                    NavigationView {
-                        DetailView(
-                            store: store.scope(state: \.detailState.wrappedValue!, action: \.detail),
-                            gid: route.wrappedValue, user: user, setting: $setting,
-                            blurRadius: blurRadius, tagTranslator: tagTranslator
-                        )
+            )
+            .searchable(text: $store.keyword, prompt: L10n.Localizable.Searchable.Prompt.filter)
+            .onAppear {
+                if store.galleries.isEmpty {
+                    DispatchQueue.main.async {
+                        store.send(.fetchGalleries)
                     }
-                    .autoBlur(radius: blurRadius).environment(\.inSheet, true).navigationViewStyle(.stack)
                 }
-        } else {
-            content
+            }
+            .background(navigationLink)
+            .toolbar(content: toolbar)
+            .navigationTitle(L10n.Localizable.HistoryView.Title.history)
+
+            if DeviceUtil.isPad {
+                content
+                    .sheet(item: $store.route.sending(\.setNavigation).detail, id: \.self) { route in
+                        NavigationView {
+                            DetailView(
+                                store: store.scope(state: \.detailState.wrappedValue!, action: \.detail),
+                                gid: route.wrappedValue, user: user, setting: $setting,
+                                blurRadius: blurRadius, tagTranslator: tagTranslator
+                            )
+                        }
+                        .autoBlur(radius: blurRadius).environment(\.inSheet, true).navigationViewStyle(.stack)
+                    }
+            } else {
+                content
+            }
         }
     }
 
